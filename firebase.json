@@ -1,0 +1,37 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "marine-biodiversity",
+          "appId": "1:860037516705:android:d3b1ac544b0d18619dcfe0",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "marine-biodiversity",
+          "configurations": {
+            "android": "1:860037516705:android:d3b1ac544b0d18619dcfe0",
+            "ios": "1:860037516705:ios:445e8d4eca7d7f7a9dcfe0",
+            "web": "1:860037516705:web:e806c54ae15b563f9dcfe0"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ]
+}

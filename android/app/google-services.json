@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "860037516705",
+    "project_id": "marine-biodiversity",
+    "storage_bucket": "marine-biodiversity.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:860037516705:android:d3b1ac544b0d18619dcfe0",
+        "android_client_info": {
+          "package_name": "com.skiez.marine_trust"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAh3o-K0IR-XlfGPzaBfHBMXl7YFeM7-Fo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
