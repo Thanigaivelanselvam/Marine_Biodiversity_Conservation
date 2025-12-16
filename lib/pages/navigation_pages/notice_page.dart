@@ -156,7 +156,7 @@ class _NoticeUploadPageState extends State<NoticeUploadPage> {
             ElevatedButton(
               onPressed: isUploading ? null : uploadNotice,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
+                backgroundColor: Colors.green,
                 minimumSize: Size(double.infinity, width * 0.13),
               ),
               child:
