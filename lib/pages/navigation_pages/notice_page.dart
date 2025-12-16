@@ -143,7 +143,7 @@ class _NoticeUploadPageState extends State<NoticeUploadPage> {
                 ElevatedButton(
                   onPressed: pickFile,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
                   ),
                   child: const Text("Choose File"),
