@@ -299,38 +299,59 @@ class QuizResultPage extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.greenAccent,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 14,
-                  ),
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 900),
+            curve: Curves.elasticOut,
+            builder: (context, value, child) {
+              return Transform.scale(
+                scale: value,
+                child: Opacity(
+                  opacity: value.clamp(0.0, 1.0),
+                  child: child,
                 ),
-                icon: const Icon(Icons.download, color: Colors.black),
-                label: const Text(
-                  "Download Certificate",
+              );
+            },
+            child: Column(
+              children: [
+                Text(
+                  "🎉 Congratulations! 🎉",
                   style: TextStyle(
-                    color: Colors.black,
+                    fontSize: isTablet ? 28 : 22,
                     fontWeight: FontWeight.bold,
+                    color: Colors.greenAccent,
                   ),
+                  textAlign: TextAlign.center,
                 ),
-                onPressed: () async {
-                  final file = await CertificateGenerator.generate(
-                    name: "Student Name", // later replace with user input
-                    badge: getBadgeTitle(),
-                    score: score,
-                    total: total,
-                  );
 
-                  await Printing.sharePdf(
-                    bytes: await file.readAsBytes(),
-                    filename: "Marine_Quiz_Certificate.pdf",
-                  );
-                },
-              ),
+                const SizedBox(height: 8),
+
+                Text(
+                  "You’ve successfully completed the Marine Quiz\nand earned the badge:",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: isTablet ? 18 : 14,
+                    height: 1.4,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 10),
+
+                Text(
+                  getBadgeTitle(),
+                  style: TextStyle(
+                    fontSize: isTablet ? 22 : 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.cyanAccent,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
             ],
           ),
         ),
