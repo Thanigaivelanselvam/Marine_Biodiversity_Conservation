@@ -64,6 +64,7 @@ dependencies:
   unicons: ^2.1.0
   pdf: ^3.10.4
   printing: ^5.12.0
+  confetti: ^0.7.0
 
 
 

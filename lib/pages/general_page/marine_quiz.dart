@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:confetti/confetti.dart';
 
 class MarineQuizPage extends StatefulWidget {
   const MarineQuizPage({super.key});
@@ -216,28 +217,58 @@ class _MarineQuizPageState extends State<MarineQuizPage> {
 }
 
 /* ================= RESULT PAGE ================= */
-
-class QuizResultPage extends StatelessWidget {
+class QuizResultPage extends StatefulWidget {
   final int score;
   final int total;
 
   const QuizResultPage({super.key, required this.score, required this.total});
 
+  @override
+  State<QuizResultPage> createState() => _QuizResultPageState();
+}
+
+class _QuizResultPageState extends State<QuizResultPage> {
+  late ConfettiController _confettiController;
+
+  bool get isPassed => (widget.score / widget.total) >= 0.5;
+
+  @override
+  void initState() {
+    super.initState();
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 3),
+    );
+
+    // 🎉 Play confetti only if score > 50%
+    if (isPassed) {
+      Future.delayed(const Duration(milliseconds: 400), () {
+        _confettiController.play();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
+  }
+
   String getBadgeTitle() {
-    if (score == total) return "Ocean Guardian 🌊";
-    if (score >= total - 1) return "Sea Explorer 🐬";
-    if (score >= 2) return "Ocean Learner 🌱";
+    if (widget.score == widget.total) return "Ocean Guardian 🌊";
+    if (widget.score >= widget.total - 1) return "Sea Explorer 🐬";
+    if (widget.score >= 2) return "Ocean Learner 🌱";
     return "Beginner Explorer 📘";
   }
 
   @override
   Widget build(BuildContext context) {
-    final percent = ((score / total) * 100).round();
+    final percent = ((widget.score / widget.total) * 100).round();
     final isTablet = MediaQuery.of(context).size.width > 600;
 
     return Scaffold(
       backgroundColor: const Color(0xFF001F3F),
       appBar: AppBar(
+        backgroundColor: const Color(0xFF0077B6),
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
@@ -249,23 +280,38 @@ class QuizResultPage extends StatelessWidget {
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        backgroundColor: const Color(0xFF0077B6),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-      return SingleChildScrollView(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: constraints.maxHeight,
-          ),
-          child: IntrinsicHeight(
-            child: Center(
+      body: Stack(
+        children: [
+          // 🎊 CONFETTI
+          if (isPassed)
+            Align(
+              alignment: Alignment.topCenter,
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirectionality: BlastDirectionality.explosive,
+                shouldLoop: false,
+                emissionFrequency: 0.05,
+                numberOfParticles: 25,
+                gravity: 0.2,
+                colors: const [
+                  Colors.green,
+                  Colors.cyan,
+                  Colors.blue,
+                  Colors.yellow,
+                  Colors.white,
+                ],
+              ),
+            ),
+
+          // MAIN CONTENT
+          Center(
+            child: SingleChildScrollView(
               child: Padding(
                 padding: EdgeInsets.all(isTablet ? 32 : 20),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // SCORE
                     Text(
                       "Your Score",
                       style: TextStyle(
@@ -276,7 +322,7 @@ class QuizResultPage extends StatelessWidget {
                     const SizedBox(height: 10),
 
                     Text(
-                      "$score / $total",
+                      "${widget.score} / ${widget.total}",
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: isTablet ? 48 : 36,
@@ -297,7 +343,7 @@ class QuizResultPage extends StatelessWidget {
 
                     const SizedBox(height: 30),
 
-                    // 🎉 CONGRATULATIONS ANIMATION
+                    // 🎉 CONGRATS TEXT (already exists)
                     TweenAnimationBuilder<double>(
                       tween: Tween(begin: 0, end: 1),
                       duration: const Duration(milliseconds: 900),
@@ -314,17 +360,18 @@ class QuizResultPage extends StatelessWidget {
                       child: Column(
                         children: [
                           Text(
-                            "🎉 Congratulations! 🎉",
+                            isPassed ? "🎉 Congratulations! 🎉" : "Good Try 👍",
                             style: TextStyle(
                               fontSize: isTablet ? 28 : 22,
                               fontWeight: FontWeight.bold,
-                              color: Colors.greenAccent,
+                              color:
+                                  isPassed
+                                      ? Colors.greenAccent
+                                      : Colors.orangeAccent,
                             ),
                             textAlign: TextAlign.center,
                           ),
-
                           const SizedBox(height: 10),
-
                           Text(
                             "You earned the badge:",
                             style: TextStyle(
@@ -332,9 +379,7 @@ class QuizResultPage extends StatelessWidget {
                               fontSize: isTablet ? 18 : 14,
                             ),
                           ),
-
                           const SizedBox(height: 6),
-
                           Text(
                             getBadgeTitle(),
                             style: TextStyle(
@@ -349,7 +394,6 @@ class QuizResultPage extends StatelessWidget {
 
                     const SizedBox(height: 30),
 
-                    // PLAY AGAIN
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
@@ -367,22 +411,15 @@ class QuizResultPage extends StatelessWidget {
                           ),
                         );
                       },
-                      child: Text(
-                        "Play Again",
-                        style: TextStyle(
-                          fontSize: isTablet ? 20 : 16,
-                        ),
-                      ),
+                      child: const Text("Play Again"),
                     ),
                   ],
                 ),
               ),
             ),
           ),
-        ),
-      );
-    },
-    ),
+        ],
+      ),
     );
   }
 }
