@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:marine_trust/pages/general_page/marine_quiz.dart';
+import 'package:marine_trust/pages/general_page/ocean_life_page.dart';
 import 'package:marine_trust/pages/general_page/ocean_threats_page.dart';
 import 'package:marine_trust/pages/navigation_pages/career_page.dart';
 import 'package:marine_trust/pages/navigation_pages/donate_screen.dart';
@@ -145,6 +146,51 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Text(""),
             ),
           ),
+          ListTile(
+            leading: Icon(Icons.favorite),
+            title: Text("Ocean & Our Life "),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) {
+                    return OceanLifePage();
+                  },
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.report_problem_outlined),
+            title: Text("Ocean Threats & Challenges"),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) {
+                    return OceanThreatsPage();
+                  },
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(FontAwesomeIcons.brain),
+            title: Text("Marine Quiz"),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) {
+                    return MarineQuizPage();
+                  },
+                ),
+              );
+            },
+          ),
           Theme(
             data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
             child: ExpansionTile(
@@ -194,36 +240,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(
                   builder: (context) {
                     return CareerPage();
-                  },
-                ),
-              );
-            },
-          ),
-          ListTile(
-            leading: Icon(FontAwesomeIcons.brain),
-            title: Text("Marine Quiz"),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) {
-                    return MarineQuizPage();
-                  },
-                ),
-              );
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.report_problem_outlined),
-            title: Text("Ocean Threats & Challenges"),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) {
-                    return OceanThreatsPage();
                   },
                 ),
               );
