@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:marine_trust/pages/general_page/marine_quiz.dart';
 import 'package:marine_trust/pages/general_page/ocean_life_page.dart';
 import 'package:marine_trust/pages/general_page/ocean_threats_page.dart';
+import 'package:marine_trust/pages/general_page/volunteer_activity_page.dart';
 import 'package:marine_trust/pages/navigation_pages/career_page.dart';
 import 'package:marine_trust/pages/navigation_pages/donate_screen.dart';
 import 'package:marine_trust/pages/navigation_pages/events_page.dart';
@@ -171,6 +172,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(
                   builder: (context) {
                     return OceanThreatsPage();
+                  },
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.workspace_premium_outlined),
+            title: Text("Ocean Volunteer"),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) {
+                    return OceanHeroesUploadPage();
                   },
                 ),
               );

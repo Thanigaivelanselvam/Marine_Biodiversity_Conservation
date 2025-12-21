@@ -33,7 +33,9 @@ class StartingPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 30),
                 const Text(
-                  "Welcome to Marine Trust",
+                  "Welcome to \n"
+                      "Marine Biodiversity\n"
+                      "Conservation",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
