@@ -1,14 +1,15 @@
-// event_upload_page.dart
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+const String adminEmail = "thanigaivelanselvam@gmail.com";
+
 class EventUploadPage extends StatefulWidget {
-  final bool isAdmin;
-  const EventUploadPage({super.key, required this.isAdmin});
+  const EventUploadPage({super.key});
 
   @override
   State<EventUploadPage> createState() => _EventUploadPageState();
@@ -23,14 +24,26 @@ class _EventUploadPageState extends State<EventUploadPage> {
   File? selectedImage;
 
   double uploadProgress = 0;
+  bool isAuthorized = false;
 
   String? selectedCategory;
-  List<String> categories = [
-    "Awareness",
-    "Restoration",
-    "Research",
-    "Cleanup",
-  ];
+  List<String> categories = ["Awareness", "Restoration", "Research", "Cleanup"];
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAdmin();
+  }
+
+  void _checkAdmin() {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null && user.email == adminEmail) {
+      setState(() => isAuthorized = true);
+    } else {
+      Future.microtask(() => Navigator.pop(context));
+    }
+  }
 
   // PICK IMAGE
   Future<void> pickImage() async {
@@ -53,11 +66,11 @@ class _EventUploadPageState extends State<EventUploadPage> {
   Future<String?> uploadFile(File file, String folder) async {
     try {
       final ext = file.path.split('.').last;
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child("$folder/${DateTime.now().millisecondsSinceEpoch}.$ext");
+      final ref = FirebaseStorage.instance.ref().child(
+        "$folder/${DateTime.now().millisecondsSinceEpoch}.$ext",
+      );
 
-      UploadTask uploadTask = ref.putFile(file);
+      final uploadTask = ref.putFile(file);
 
       uploadTask.snapshotEvents.listen((event) {
         setState(() {
@@ -66,7 +79,6 @@ class _EventUploadPageState extends State<EventUploadPage> {
       });
 
       await uploadTask;
-
       return await ref.getDownloadURL();
     } catch (e) {
       debugPrint("Upload error: $e");
@@ -81,7 +93,8 @@ class _EventUploadPageState extends State<EventUploadPage> {
         selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text("Title, Description & Category are required")),
+          content: Text("Title, Description & Category are required"),
+        ),
       );
       return;
     }
@@ -103,12 +116,13 @@ class _EventUploadPageState extends State<EventUploadPage> {
       "type": "event",
       "title": _titleCtrl.text.trim(),
       "subtitle":
-      _subtitleCtrl.text.trim().isEmpty ? null : _subtitleCtrl.text.trim(),
+          _subtitleCtrl.text.trim().isEmpty ? null : _subtitleCtrl.text.trim(),
       "message": _messageCtrl.text.trim(),
       "category": selectedCategory,
       "imageUrl": imageUrl ?? "",
       "fileUrl": fileUrl ?? "",
       "createdAt": FieldValue.serverTimestamp(),
+      "uploadedBy": adminEmail,
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -127,53 +141,10 @@ class _EventUploadPageState extends State<EventUploadPage> {
     });
   }
 
-  // ADD CATEGORY
-  void addNewCategory() {
-    final controller = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Add Category"),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            labelText: "Category name",
-          ),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel")),
-          ElevatedButton(
-            onPressed: () {
-              final text = controller.text.trim();
-              if (text.isEmpty) return;
-
-              setState(() {
-                categories.add(text);
-                selectedCategory = text;
-              });
-              Navigator.pop(context);
-            },
-            child: const Text("Add"),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (!widget.isAdmin) {
-      return const Scaffold(
-        body: Center(
-            child: Text(
-              "Access Denied – Admin Only",
-              style: TextStyle(fontSize: 18),
-            )),
-      );
+    if (!isAuthorized) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final width = MediaQuery.of(context).size.width;
@@ -182,12 +153,13 @@ class _EventUploadPageState extends State<EventUploadPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF09B1EC),
-        title: const Text("Upload Event",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text(
+          "Upload Event",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         leading: const BackButton(color: Colors.white),
       ),
-
       body: SingleChildScrollView(
         padding: EdgeInsets.all(isTablet ? 32 : 20),
         child: Center(
@@ -196,168 +168,137 @@ class _EventUploadPageState extends State<EventUploadPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // IMAGE PICKER CARD
-                Text("Event Image (optional)",
-                    style:
-                    TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                const SizedBox(height: 10),
-
-                GestureDetector(
-                  onTap: pickImage,
-                  child: Container(
-                    height: isTablet ? 260 : 180,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade300),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 6,
-                            offset: Offset(0, 3))
-                      ],
-                    ),
-                    child: selectedImage == null
-                        ? Center(
-                      child: Text(
-                        "Tap to choose image",
-                        style: TextStyle(
-                            fontSize: isTablet ? 18 : 14,
-                            color: Colors.grey),
-                      ),
-                    )
-                        : ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.file(selectedImage!,
-                          fit: BoxFit.cover, width: double.infinity),
-                    ),
-                  ),
-                ),
-
+                _imagePicker(isTablet),
                 const SizedBox(height: 20),
-
-                // TITLE FIELD
                 TextField(
                   controller: _titleCtrl,
                   decoration: inputBox("Event Title *"),
                 ),
                 const SizedBox(height: 18),
-
-                // SUBTITLE
                 TextField(
                   controller: _subtitleCtrl,
                   decoration: inputBox("Event Subtitle (optional)"),
                 ),
                 const SizedBox(height: 18),
-
-                // CATEGORY
-                Text("Category *",
-                    style:
-                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 6),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: selectedCategory,
-                        decoration: inputBox("Select Category"),
-                        items: categories
-                            .map((c) =>
-                            DropdownMenuItem(value: c, child: Text(c)))
-                            .toList(),
-                        onChanged: (val) => setState(() => selectedCategory = val),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed: addNewCategory,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF09B1EC),
-                      ),
-                      child: const Text("+",
-                          style: TextStyle(color: Colors.white, fontSize: 22)),
-                    )
-                  ],
-                ),
-
+                _categoryPicker(),
                 const SizedBox(height: 20),
-
-                // DESCRIPTION
                 TextField(
                   controller: _messageCtrl,
                   maxLines: 3,
                   decoration: inputBox("Event Description *"),
                 ),
-
                 const SizedBox(height: 20),
-
-                // FILE PICKER
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        selectedFile == null
-                            ? "No document selected"
-                            : selectedFile!.path.split('/').last,
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: pickFile,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white
-                      ),
-                      child: const Text("Select File",
-                          style: TextStyle(color: Colors.white)),
-                    ),
-                  ],
-                ),
-
+                _filePicker(),
                 const SizedBox(height: 20),
-
-                // PROGRESS BAR
-                if (uploadProgress > 0)
-                  Column(
-                    children: [
-                      LinearProgressIndicator(
-                        value: uploadProgress,
-                        color: const Color(0xFF09B1EC),
-                        minHeight: 6,
-                        backgroundColor: Colors.black12,
-                      ),
-                      const SizedBox(height: 8),
-                      Text("${(uploadProgress * 100).toStringAsFixed(0)}%"),
-                    ],
-                  ),
-
+                if (uploadProgress > 0) _progressBar(),
                 const SizedBox(height: 30),
-
-                // SUBMIT BUTTON
-                Center(
-                  child: SizedBox(
-                    width: isTablet ? 260 : 180,
-                    height: isTablet ? 55 : 48,
-                    child: ElevatedButton(
-                      onPressed: uploadEvent,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF09B1EC),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text(
-                        "Upload Event",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ),
+                _submitButton(isTablet),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _imagePicker(bool isTablet) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Event Image (optional)",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        const SizedBox(height: 10),
+        GestureDetector(
+          onTap: pickImage,
+          child: Container(
+            height: isTablet ? 260 : 180,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child:
+                selectedImage == null
+                    ? const Center(child: Text("Tap to choose image"))
+                    : ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.file(selectedImage!, fit: BoxFit.cover),
+                    ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _categoryPicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Category *",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          value: selectedCategory,
+          decoration: inputBox("Select Category"),
+          items:
+              categories
+                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                  .toList(),
+          onChanged: (val) => setState(() => selectedCategory = val),
+        ),
+      ],
+    );
+  }
+
+  Widget _filePicker() {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            selectedFile == null
+                ? "No document selected"
+                : selectedFile!.path.split('/').last,
+          ),
+        ),
+        ElevatedButton(
+          onPressed: pickFile,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green,
+            foregroundColor: Colors.white,
+          ),
+          child: const Text("Select File"),
+        ),
+      ],
+    );
+  }
+
+  Widget _progressBar() {
+    return Column(
+      children: [
+        LinearProgressIndicator(value: uploadProgress),
+        const SizedBox(height: 8),
+        Text("${(uploadProgress * 100).toStringAsFixed(0)}%"),
+      ],
+    );
+  }
+
+  Widget _submitButton(bool isTablet) {
+    return Center(
+      child: SizedBox(
+        width: isTablet ? 260 : 180,
+        height: isTablet ? 55 : 48,
+        child: ElevatedButton(
+          onPressed: uploadEvent,
+          style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.white,
+            backgroundColor: Colors.blue,
+          ),
+          child: const Text(
+            "Upload Event",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
       ),

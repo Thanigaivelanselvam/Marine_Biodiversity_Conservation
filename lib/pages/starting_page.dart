@@ -1,8 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:marine_trust/pages/authentication_page/login_page.dart';
-import 'package:marine_trust/pages/authentication_page/register_page.dart';
-import 'package:marine_trust/pages/navigation_pages/home_screen.dart';
 import 'package:marine_trust/pages/navigation_pages/welcome_page.dart';
 
 class StartingPage extends StatelessWidget {
@@ -67,21 +63,10 @@ class StartingPage extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) {
-                          return HomeScreen();
+                          return WelcomePage();
                         },
                       ),
                     );
-                     if (FirebaseAuth.instance.currentUser != null) {
-                      Navigator.push(
-                         context,
-                         MaterialPageRoute(builder: (context) => WelcomePage()),
-                       );
-                     } else {
-                       Navigator.push(
-                         context,
-                         MaterialPageRoute(builder: (context) => LoginPage()),
-                       );
-                     }
                   },
                   child: const Text(
                     "Get Started →",

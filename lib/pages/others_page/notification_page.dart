@@ -5,9 +5,19 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class NotificationPage extends StatelessWidget {
+
+class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
+
+  @override
+  State<NotificationPage> createState() => _NotificationPageState();
+}
+
+class _NotificationPageState extends State<NotificationPage> {
+
+  final String adminEmail = "thanigaivelanselvam@gmail.com";
 
   Future<void> openPdfFromUrl(String url, BuildContext context) async {
     try {
@@ -48,6 +58,34 @@ class NotificationPage extends StatelessWidget {
       ).showSnackBar(SnackBar(content: Text("Delete Failed: $e")));
     }
   }
+  void handleAdminLongPress(
+      BuildContext context,
+      String id,
+      String source,
+      ) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null && user.email == adminEmail) {
+      showDeleteDialog(context, id, source);
+    } else {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("Access Restricted"),
+          content: const Text(
+            "Only the administrator can delete notifications.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
 
   void showDeleteDialog(BuildContext context, String id, String source) {
     showDialog(
@@ -183,12 +221,11 @@ class NotificationPage extends StatelessWidget {
                   final item = items[index];
 
                   return GestureDetector(
-                    onLongPress:
-                        () => showDeleteDialog(
-                          context,
-                          item["id"],
-                          item["source"],
-                        ),
+                    onLongPress: () => handleAdminLongPress(
+                      context,
+                      item["id"],
+                      item["source"],
+                    ),
                     child: Card(
                       margin: EdgeInsets.only(bottom: width * 0.03),
                       child: Padding(

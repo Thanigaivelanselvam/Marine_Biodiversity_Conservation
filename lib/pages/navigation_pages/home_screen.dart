@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:marine_trust/pages/admin_page/manager_desk_page.dart';
 import 'package:marine_trust/pages/authentication_page/account_settings_page.dart';
 import 'package:marine_trust/pages/general_page/marine_quiz.dart';
 import 'package:marine_trust/pages/general_page/ocean_life_page.dart';
@@ -24,6 +26,36 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
+  void _openManagerDesk(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    // 🔐 Admin check
+    if (user != null && user.email == "thanigaivelanselvam@gmail.com") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ManagerDeskPage()),
+      );
+    } else {
+      // 🚫 Warning popup for non-admin
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("Access Restricted"),
+          content: const Text(
+            "This section is only accessible to the administrator.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   List<Map<String, dynamic>> marineTask = [
     {
       "image": "assests/images/ocean.png",
@@ -221,44 +253,15 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
-          Theme(
-            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-            child: ExpansionTile(
-              leading: Icon(FontAwesomeIcons.userTie),
-
-              title: const Text("Manager Desk"),
-              iconColor: Colors.black,
-              collapsedIconColor: Colors.black,
-              children: [
-                ListTile(
-                  leading: Icon(Icons.announcement_outlined),
-                  title: Text("Notice"),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const NoticeUploadPage(isAdmin: true),
-                      ),
-                    );
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.event),
-                  title: Text("Events"),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => EventUploadPage(isAdmin: true),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
+          ListTile(
+            leading: const Icon(FontAwesomeIcons.userTie),
+            title: const Text("Manager Desk"),
+            onTap: () {
+              Navigator.pop(context);
+              _openManagerDesk(context);
+            },
           ),
+
 
           ListTile(
             leading: Icon(Icons.school),

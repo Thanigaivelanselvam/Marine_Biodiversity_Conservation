@@ -1,12 +1,14 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 
+const String adminEmail = "thanigaivelanselvam@gmail.com";
+
 class NoticeUploadPage extends StatefulWidget {
-  final bool isAdmin; // comes from login page
-  const NoticeUploadPage({super.key, required this.isAdmin});
+  const NoticeUploadPage({super.key});
 
   @override
   State<NoticeUploadPage> createState() => _NoticeUploadPageState();
@@ -18,6 +20,25 @@ class _NoticeUploadPageState extends State<NoticeUploadPage> {
 
   File? selectedFile;
   bool isUploading = false;
+  bool isAuthorized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAdminAccess();
+  }
+
+  void _checkAdminAccess() {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null && user.email == adminEmail) {
+      setState(() => isAuthorized = true);
+    } else {
+      Future.microtask(() {
+        Navigator.pop(context);
+      });
+    }
+  }
 
   Future<void> pickFile() async {
     final result = await FilePicker.platform.pickFiles(
@@ -65,6 +86,7 @@ class _NoticeUploadPageState extends State<NoticeUploadPage> {
       "message": _messageCtrl.text.trim(),
       "fileUrl": fileUrl ?? "",
       "createdAt": FieldValue.serverTimestamp(),
+      "uploadedBy": adminEmail,
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -82,15 +104,8 @@ class _NoticeUploadPageState extends State<NoticeUploadPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.isAdmin) {
-      return const Scaffold(
-        body: Center(
-          child: Text(
-            "Access Denied — Admin Only",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-        ),
-      );
+    if (!isAuthorized) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final width = MediaQuery.of(context).size.width;
@@ -116,9 +131,7 @@ class _NoticeUploadPageState extends State<NoticeUploadPage> {
                 labelText: "Notice Title *",
               ),
             ),
-
-            SizedBox(height: 20),
-
+            const SizedBox(height: 20),
             TextField(
               controller: _messageCtrl,
               maxLines: 3,
@@ -127,9 +140,7 @@ class _NoticeUploadPageState extends State<NoticeUploadPage> {
                 labelText: "Notice Message *",
               ),
             ),
-
-            SizedBox(height: 20),
-
+            const SizedBox(height: 20),
             Row(
               children: [
                 Expanded(
@@ -137,35 +148,30 @@ class _NoticeUploadPageState extends State<NoticeUploadPage> {
                     selectedFile == null
                         ? "No file selected"
                         : selectedFile!.path.split('/').last,
-                    style: const TextStyle(fontSize: 14),
                   ),
                 ),
                 ElevatedButton(
                   onPressed: pickFile,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
+                    backgroundColor: Colors.green,
                   ),
                   child: const Text("Choose File"),
                 ),
               ],
             ),
-
-            SizedBox(height: 30),
-
+            const SizedBox(height: 30),
             ElevatedButton(
               onPressed: isUploading ? null : uploadNotice,
               style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
                 backgroundColor: Colors.blue,
                 minimumSize: Size(double.infinity, width * 0.13),
               ),
               child:
                   isUploading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                        "Upload Notice",
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
+                      : const Text("Upload Notice"),
             ),
           ],
         ),

@@ -1,18 +1,17 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:marine_trust/pages/authentication_page/register_page.dart';
-import 'package:marine_trust/pages/navigation_pages/notice_page.dart';
-import 'package:marine_trust/pages/navigation_pages/welcome_page.dart';
+import 'package:marine_trust/pages/admin_page/manager_desk_page.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+const String adminEmail = "thanigaivelanselvam@gmail.com";
+
+class AdminLoginPage extends StatefulWidget {
+  const AdminLoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<AdminLoginPage> createState() => _AdminLoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _AdminLoginPageState extends State<AdminLoginPage> {
   final _formKey = GlobalKey<FormState>();
 
   final emailController = TextEditingController();
@@ -21,10 +20,8 @@ class _LoginPageState extends State<LoginPage> {
   bool _isVisible = false;
   bool _isLoading = false;
 
-  // ---------------------------------------------------------
-  // 🔥 LOGIN (SAFE VERSION)
-  // ---------------------------------------------------------
-  Future<void> loginUser() async {
+  // 🔐 ADMIN LOGIN
+  Future<void> _loginAdmin() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -33,69 +30,46 @@ class _LoginPageState extends State<LoginPage> {
       final email = emailController.text.trim().toLowerCase();
       final password = passwordController.text.trim();
 
-      // 1️⃣ Firebase Auth login
       final userCredential =
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      final user = userCredential.user!;
-      String role = "user"; // default (VERY IMPORTANT)
+      final user = userCredential.user;
 
-      // 2️⃣ Read role from Firestore (SAFE)
-      final doc = await FirebaseFirestore.instance
-          .collection("users")
-          .doc(user.uid)
-          .get();
-
-      if (doc.exists && doc.data() != null) {
-        role = doc.data()!["role"] ?? "user";
+      if (user == null || user.email != adminEmail) {
+        await FirebaseAuth.instance.signOut();
+        throw FirebaseAuthException(
+          code: "unauthorized",
+          message: "You are not authorized",
+        );
       }
 
       if (!mounted) return;
 
-      // 3️⃣ Success feedback
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Login successful"),
-          backgroundColor: Colors.green,
-        ),
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ManagerDeskPage()),
       );
-
-      // 4️⃣ Role-based navigation
-      if (role == "admin") {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const NoticeUploadPage(isAdmin: true),
-          ),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const WelcomePage()),
-        );
-      }
     } on FirebaseAuthException catch (e) {
       String message;
 
       switch (e.code) {
         case "user-not-found":
-          message = "No account found with this email";
+          message = "Admin account not found";
           break;
         case "wrong-password":
           message = "Incorrect password";
           break;
         case "invalid-email":
-          message = "Invalid email address";
+          message = "Invalid email";
           break;
-        case "too-many-requests":
-          message =
-          "Too many attempts. Please try again later or reset password.";
+        case "unauthorized":
+          message = "Access denied";
           break;
         default:
-          message = "Login failed. Please try again";
+          message = "Login failed";
       }
 
       if (!mounted) return;
@@ -103,23 +77,11 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
-    } catch (_) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Something went wrong. Please try again."),
-          backgroundColor: Colors.red,
-        ),
-      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  // ---------------------------------------------------------
-  // UI
-  // ---------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -134,21 +96,18 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   Image.asset(
                     "assests/images/logo-removebg-preview (1).png",
-                    height: 220,
+                    height: 200,
                   ),
-
                   const SizedBox(height: 20),
-
                   const Text(
-                    "Login to Marine\nBiodiversity Conservation",
+                    "Admin Login\nMarine Biodiversity Conservation",
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF0077B6),
                     ),
                   ),
-
                   const SizedBox(height: 30),
 
                   // EMAIL
@@ -156,15 +115,14 @@ class _LoginPageState extends State<LoginPage> {
                     controller: emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
-                      labelText: "Email",
+                      labelText: "Admin Email",
                       border: OutlineInputBorder(),
                     ),
                     validator: (value) =>
                     value == null || value.isEmpty
-                        ? "Enter your email"
+                        ? "Enter admin email"
                         : null,
                   ),
-
                   const SizedBox(height: 15),
 
                   // PASSWORD
@@ -186,48 +144,13 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     validator: (value) =>
                     value == null || value.isEmpty
-                        ? "Enter your password"
+                        ? "Enter password"
                         : null,
                   ),
-
-                  const SizedBox(height: 10),
-
-                  // FORGOT PASSWORD
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () async {
-                        final email = emailController.text.trim();
-                        if (email.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Enter your email first"),
-                              backgroundColor: Colors.orange,
-                            ),
-                          );
-                          return;
-                        }
-
-                        await FirebaseAuth.instance
-                            .sendPasswordResetEmail(email: email);
-
-                        if (!mounted) return;
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Password reset email sent"),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      },
-                      child: const Text("Forgot Password?",style: TextStyle(color: Colors.black),),
-                    ),
-                  ),
-
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 20),
 
                   ElevatedButton(
-                    onPressed: _isLoading ? null : loginUser,
+                    onPressed: _isLoading ? null : _loginAdmin,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0077B6),
                       foregroundColor: Colors.white,
@@ -236,17 +159,6 @@ class _LoginPageState extends State<LoginPage> {
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
                         : const Text("Login"),
-                  ),
-
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const RegisterPage()),
-                      );
-                    },
-                    child: const Text("Don’t have an account? Sign Up"),
                   ),
                 ],
               ),
