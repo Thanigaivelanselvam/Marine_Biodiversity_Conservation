@@ -29,85 +29,96 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   // -------------------------------------------------------------
-  // 🔥 REGISTER NEW USER + ROLE SYSTEM (admin/user)
+  // 🔥 REGISTER USER (GOOGLE PLAY SAFE VERSION)
   // -------------------------------------------------------------
   Future<void> registerUser() async {
     if (!_formKey.currentState!.validate()) return;
 
-    try {
-      setState(() => _isLoading = true);
+    setState(() => _isLoading = true);
 
+    try {
       final name = nameController.text.trim();
       final email = emailController.text.trim().toLowerCase();
       final password = passwordController.text.trim();
 
-      // 1️⃣ Create Firebase Auth User
+      // 1️⃣ Create Firebase Auth user
       UserCredential userCredential =
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      User user = userCredential.user!;
+      final user = userCredential.user!;
       await user.updateDisplayName(name);
 
-      // 2️⃣ Assign Role (Admin/User)
-      String role = (email == "thanigaivelanselvam@gmail.com")
-          ? "admin"
-          : "user";
-
-      // 3️⃣ Save Data to Firestore
-      await FirebaseFirestore.instance.collection("users").doc(user.uid).set({
+      // 2️⃣ ALWAYS assign "user" role (admin via Firebase console only)
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(user.uid)
+          .set({
         "uid": user.uid,
         "name": name,
         "email": email,
-        "role": role,
+        "role": "user",
         "createdAt": FieldValue.serverTimestamp(),
       });
 
-      // 4️⃣ Success Message
+      if (!mounted) return;
+
+      // 3️⃣ Success message
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Account created successfully!"),
+          content: Text("Account created successfully"),
           backgroundColor: Colors.green,
         ),
       );
 
-      // 5️⃣ Go to Login Page
+      // 4️⃣ Navigate to Login
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginPage()),
       );
     } on FirebaseAuthException catch (e) {
-      String message = "Registration failed";
+      String message;
 
-      if (e.code == "email-already-in-use") {
-        message = "This email is already registered";
-      } else if (e.code == "invalid-email") {
-        message = "Invalid email format";
-      } else if (e.code == "weak-password") {
-        message = "Password must be at least 6 characters";
-      } else if (e.code == "network-request-failed") {
-        message = "Check your internet connection";
+      switch (e.code) {
+        case "email-already-in-use":
+          message = "This email is already registered";
+          break;
+        case "invalid-email":
+          message = "Invalid email address";
+          break;
+        case "weak-password":
+          message = "Password must be at least 6 characters";
+          break;
+        case "network-request-failed":
+          message = "Check your internet connection";
+          break;
+        default:
+          message = "Registration failed. Try again";
       }
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
     } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Unexpected Error: $e"),
+          content: Text("Unexpected error occurred"),
           backgroundColor: Colors.red,
         ),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   // -------------------------------------------------------------
-  // UI SECTION
+  // UI
   // -------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
@@ -121,11 +132,9 @@ class _RegisterPageState extends State<RegisterPage> {
               key: _formKey,
               child: Column(
                 children: [
-                  // ✔ FIXED: Correct Assets Path
                   Image.asset(
                     "assests/images/logo-removebg-preview (1).png",
                     height: 180,
-                    fit: BoxFit.contain,
                   ),
 
                   const SizedBox(height: 20),
@@ -141,7 +150,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                   const SizedBox(height: 30),
 
-                  // FULL NAME
+                  // NAME
                   TextFormField(
                     controller: nameController,
                     decoration: const InputDecoration(
@@ -149,7 +158,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       border: OutlineInputBorder(),
                     ),
                     validator: (value) =>
-                    value!.isEmpty ? "Enter your name" : null,
+                    value == null || value.isEmpty ? "Enter your name" : null,
                   ),
 
                   const SizedBox(height: 15),
@@ -157,13 +166,18 @@ class _RegisterPageState extends State<RegisterPage> {
                   // EMAIL
                   TextFormField(
                     controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
                       labelText: "Email",
                       border: OutlineInputBorder(),
                     ),
                     validator: (value) {
-                      if (value!.isEmpty) return "Enter your email";
-                      if (!value.contains("@")) return "Invalid email";
+                      if (value == null || value.isEmpty) {
+                        return "Enter your email";
+                      }
+                      if (!value.contains("@")) {
+                        return "Enter a valid email";
+                      }
                       return null;
                     },
                   ),
@@ -188,9 +202,11 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     validator: (value) {
-                      if (value!.isEmpty) return "Enter a password";
+                      if (value == null || value.isEmpty) {
+                        return "Enter a password";
+                      }
                       if (value.length < 6) {
-                        return "Password must be 6+ characters";
+                        return "Password must be at least 6 characters";
                       }
                       return null;
                     },
@@ -198,22 +214,18 @@ class _RegisterPageState extends State<RegisterPage> {
 
                   const SizedBox(height: 25),
 
-                  // SIGN UP BUTTON
                   ElevatedButton(
+                    onPressed: _isLoading ? null : registerUser,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0077B6),
                       foregroundColor: Colors.white,
                       minimumSize: const Size(double.infinity, 50),
                     ),
-                    onPressed: _isLoading ? null : registerUser,
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
                         : const Text("Sign Up"),
                   ),
 
-                  const SizedBox(height: 10),
-
-                  // NAVIGATE TO LOGIN
                   TextButton(
                     onPressed: () {
                       Navigator.pushReplacement(

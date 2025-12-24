@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:marine_trust/pages/authentication_page/register_page.dart';
-import 'package:marine_trust/pages/navigation_pages/home_screen.dart';
 import 'package:marine_trust/pages/navigation_pages/notice_page.dart';
+import 'package:marine_trust/pages/navigation_pages/welcome_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -22,44 +22,48 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
 
   // ---------------------------------------------------------
-  // 🔥 LOGIN FUNCTION WITH ROLE CHECK
+  // 🔥 LOGIN (SAFE VERSION)
   // ---------------------------------------------------------
   Future<void> loginUser() async {
-    try {
-      setState(() => _isLoading = true);
+    if (!_formKey.currentState!.validate()) return;
 
-      final email = emailController.text.trim();
+    setState(() => _isLoading = true);
+
+    try {
+      final email = emailController.text.trim().toLowerCase();
       final password = passwordController.text.trim();
 
-      // Login via Firebase Auth
-      UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: email, password: password);
+      // 1️⃣ Firebase Auth login
+      final userCredential =
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-      User user = userCredential.user!;
+      final user = userCredential.user!;
+      String role = "user"; // default (VERY IMPORTANT)
 
-      // Read user role from Firestore
-      final roleDoc =
-      await FirebaseFirestore.instance
+      // 2️⃣ Read role from Firestore (SAFE)
+      final doc = await FirebaseFirestore.instance
           .collection("users")
           .doc(user.uid)
           .get();
 
-      if (!roleDoc.exists) {
-        throw Exception("User role not found");
+      if (doc.exists && doc.data() != null) {
+        role = doc.data()!["role"] ?? "user";
       }
 
-      String role = roleDoc["role"];
+      if (!mounted) return;
 
+      // 3️⃣ Success feedback
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Login Successful!"),
+          content: Text("Login successful"),
           backgroundColor: Colors.green,
         ),
       );
 
-      // ---------------------------------------------------------
-      // 🔥 ROLE BASED REDIRECTION
-      // ---------------------------------------------------------
+      // 4️⃣ Role-based navigation
       if (role == "admin") {
         Navigator.pushReplacement(
           context,
@@ -70,43 +74,52 @@ class _LoginPageState extends State<LoginPage> {
       } else {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          MaterialPageRoute(builder: (_) => const WelcomePage()),
         );
       }
     } on FirebaseAuthException catch (e) {
-      String message = "Login failed";
+      String message;
 
       switch (e.code) {
         case "user-not-found":
-          message = "No user found with this email";
+          message = "No account found with this email";
           break;
         case "wrong-password":
           message = "Incorrect password";
           break;
         case "invalid-email":
-          message = "Invalid email format";
+          message = "Invalid email address";
           break;
         case "too-many-requests":
           message =
-          "Too many failed attempts. Try again later or reset your password.";
+          "Too many attempts. Please try again later or reset password.";
           break;
+        default:
+          message = "Login failed. Please try again";
       }
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
-    } catch (e) {
+    } catch (_) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Unexpected Error: $e"),
+        const SnackBar(
+          content: Text("Something went wrong. Please try again."),
           backgroundColor: Colors.red,
         ),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
+  // ---------------------------------------------------------
+  // UI
+  // ---------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,21 +132,18 @@ class _LoginPageState extends State<LoginPage> {
               key: _formKey,
               child: Column(
                 children: [
-                  // ---------------------------------------------------------
-                  // ✔ FIXED: Correct asset folder name
-                  // ---------------------------------------------------------
                   Image.asset(
                     "assests/images/logo-removebg-preview (1).png",
-                    fit: BoxFit.cover,
-                    height: 250,
+                    height: 220,
                   ),
 
                   const SizedBox(height: 20),
 
                   const Text(
-                    "Login to Marine Trust",
+                    "Login to Marine\nBiodiversity Conservation",
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 26,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF0077B6),
                     ),
@@ -141,24 +151,23 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 30),
 
-                  // ---------------------------------------------------------
                   // EMAIL
-                  // ---------------------------------------------------------
                   TextFormField(
                     controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
                       labelText: "Email",
                       border: OutlineInputBorder(),
                     ),
-                    validator:
-                        (value) => value!.isEmpty ? "Enter your email" : null,
+                    validator: (value) =>
+                    value == null || value.isEmpty
+                        ? "Enter your email"
+                        : null,
                   ),
 
                   const SizedBox(height: 15),
 
-                  // ---------------------------------------------------------
                   // PASSWORD
-                  // ---------------------------------------------------------
                   TextFormField(
                     controller: passwordController,
                     obscureText: !_isVisible,
@@ -167,76 +176,74 @@ class _LoginPageState extends State<LoginPage> {
                       border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _isVisible ? Icons.visibility : Icons.visibility_off,
+                          _isVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                         ),
-                        onPressed:
-                            () => setState(() => _isVisible = !_isVisible),
+                        onPressed: () =>
+                            setState(() => _isVisible = !_isVisible),
                       ),
                     ),
-                    validator:
-                        (value) =>
-                    value!.isEmpty ? "Enter your password" : null,
+                    validator: (value) =>
+                    value == null || value.isEmpty
+                        ? "Enter your password"
+                        : null,
                   ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 10),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () async {
-                            await FirebaseAuth.instance.sendPasswordResetEmail(
-                                email: emailController.text.trim());
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Mail send Successfully"),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                        },
-                        child: Text(
-                          "Forgot Password",
-                          style: TextStyle(color: Colors.black),
-                        ),
-                      ),
-                    ],
+                  // FORGOT PASSWORD
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () async {
+                        final email = emailController.text.trim();
+                        if (email.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Enter your email first"),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                          return;
+                        }
+
+                        await FirebaseAuth.instance
+                            .sendPasswordResetEmail(email: email);
+
+                        if (!mounted) return;
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Password reset email sent"),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      },
+                      child: const Text("Forgot Password?",style: TextStyle(color: Colors.black),),
+                    ),
                   ),
 
-                  // ---------------------------------------------------------
-                  // LOGIN BUTTON
-                  // ---------------------------------------------------------
+                  const SizedBox(height: 15),
+
                   ElevatedButton(
+                    onPressed: _isLoading ? null : loginUser,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0077B6),
                       foregroundColor: Colors.white,
                       minimumSize: const Size(double.infinity, 50),
                     ),
-                    onPressed:
-                    _isLoading
-                        ? null
-                        : () {
-                      if (_formKey.currentState!.validate()) {
-                        loginUser();
-                      }
-                    },
-                    child:
-                    _isLoading
-                        ? const CircularProgressIndicator(
-                      color: Colors.white,
-                    )
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
                         : const Text("Login"),
                   ),
 
-                  const SizedBox(height: 10),
-
-                  // ---------------------------------------------------------
-                  // GO TO REGISTER PAGE
-                  // ---------------------------------------------------------
                   TextButton(
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const RegisterPage()),
+                        MaterialPageRoute(
+                            builder: (_) => const RegisterPage()),
                       );
                     },
                     child: const Text("Don’t have an account? Sign Up"),

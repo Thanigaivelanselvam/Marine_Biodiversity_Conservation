@@ -91,7 +91,7 @@ class _ContactPageState extends State<ContactPage> {
               _contactCard(
                 icon: FontAwesomeIcons.phone,
                 title: "Phone",
-                detail: "+91 99944 01291",
+                detail: "+919994401291",
               ),
               _contactCard(
                 icon: FontAwesomeIcons.mapMarkerAlt,

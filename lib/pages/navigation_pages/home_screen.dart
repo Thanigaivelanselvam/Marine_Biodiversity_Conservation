@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:marine_trust/pages/authentication_page/account_settings_page.dart';
 import 'package:marine_trust/pages/general_page/marine_quiz.dart';
 import 'package:marine_trust/pages/general_page/ocean_life_page.dart';
 import 'package:marine_trust/pages/general_page/ocean_threats_page.dart';
@@ -63,13 +64,13 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: const Color(0xFF09b1ec),
-        centerTitle: true,
+        centerTitle: false,
         title: const Text(
           "Marine Biodiversity",
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
-            fontSize: 20,
+            fontSize: 18,
           ),
         ),
         actions: [
@@ -81,6 +82,19 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
             icon: Icon(Icons.notifications),
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) {
+                    return AccountSettingsPage();
+                  },
+                ),
+              );
+            },
+            icon: Icon(Icons.person, color: Colors.white),
           ),
           IconButton(
             onPressed: () {
