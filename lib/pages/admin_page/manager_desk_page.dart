@@ -1,12 +1,13 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:marine_trust/pages/authentication_page/login_page.dart';
-
-import 'package:marine_trust/pages/navigation_pages/notice_page.dart';
 import 'package:marine_trust/pages/navigation_pages/events_page.dart';
-import 'package:marine_trust/pages/navigation_pages/welcome_page.dart';
+import 'package:marine_trust/pages/navigation_pages/notice_page.dart';
 
-const String adminEmail = "thanigaivelanselvam@gmail.com";
+const List<String> adminEmails = [
+  "thanigaivelanselvam@gmail.com",
+  "playreviewers@test.com",
+];
 
 class ManagerDeskPage extends StatefulWidget {
   const ManagerDeskPage({super.key});
@@ -26,33 +27,41 @@ class _ManagerDeskPageState extends State<ManagerDeskPage> {
 
   void _verifyAdmin() {
     final user = FirebaseAuth.instance.currentUser;
+    final email = user?.email?.toLowerCase().trim();
 
-    if (user != null && user.email == adminEmail) {
+    final allowedAdmins =
+    adminEmails.map((e) => e.toLowerCase().trim()).toList();
+
+    if (user != null && email != null && allowedAdmins.contains(email)) {
+      // ✅ ADMIN ALLOWED
       setState(() => isAuthorized = true);
     } else {
-      // 🚫 Show warning then redirect
+      // 🚫 NOT ADMIN → SHOW WARNING & REDIRECT
       Future.microtask(() async {
         await showDialog(
           context: context,
-          builder:
-              (_) => AlertDialog(
-                title: const Text("Access Restricted"),
-                content: const Text(
-                  "Manager Desk is accessible only to the administrator.",
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text("OK"),
-                  ),
-                ],
+          builder: (_) => AlertDialog(
+            title: const Text("Access Restricted"),
+            content: const Text(
+              "Manager Desk is accessible only to the administrator.",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("OK"),
               ),
+            ],
+          ),
         );
+
+        await FirebaseAuth.instance.signOut();
+
+        if (!mounted) return;
 
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => const WelcomePage()),
-          (route) => false,
+          MaterialPageRoute(builder: (_) => const AdminLoginPage()),
+              (route) => false,
         );
       });
     }

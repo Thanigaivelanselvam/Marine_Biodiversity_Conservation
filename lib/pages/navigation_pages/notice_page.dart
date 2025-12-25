@@ -5,7 +5,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 
-const String adminEmail = "thanigaivelanselvam@gmail.com";
+const List<String> adminEmails = [
+  "thanigaivelanselvam@gmail.com",
+  "playreviewers@test.com",
+];
 
 class NoticeUploadPage extends StatefulWidget {
   const NoticeUploadPage({super.key});
@@ -31,7 +34,7 @@ class _NoticeUploadPageState extends State<NoticeUploadPage> {
   void _checkAdminAccess() {
     final user = FirebaseAuth.instance.currentUser;
 
-    if (user != null && user.email == adminEmail) {
+    if (user != null && user.email == adminEmails) {
       setState(() => isAuthorized = true);
     } else {
       Future.microtask(() {
@@ -86,7 +89,7 @@ class _NoticeUploadPageState extends State<NoticeUploadPage> {
       "message": _messageCtrl.text.trim(),
       "fileUrl": fileUrl ?? "",
       "createdAt": FieldValue.serverTimestamp(),
-      "uploadedBy": adminEmail,
+      "uploadedBy": adminEmails,
     });
 
     ScaffoldMessenger.of(context).showSnackBar(

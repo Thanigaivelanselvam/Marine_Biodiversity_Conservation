@@ -6,7 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-const String adminEmail = "thanigaivelanselvam@gmail.com";
+const List<String> adminEmails = [
+  "thanigaivelanselvam@gmail.com",
+  "playreviewers@test.com",
+];
 
 class EventUploadPage extends StatefulWidget {
   const EventUploadPage({super.key});
@@ -38,7 +41,7 @@ class _EventUploadPageState extends State<EventUploadPage> {
   void _checkAdmin() {
     final user = FirebaseAuth.instance.currentUser;
 
-    if (user != null && user.email == adminEmail) {
+    if (user != null && user.email == adminEmails) {
       setState(() => isAuthorized = true);
     } else {
       Future.microtask(() => Navigator.pop(context));
@@ -122,7 +125,7 @@ class _EventUploadPageState extends State<EventUploadPage> {
       "imageUrl": imageUrl ?? "",
       "fileUrl": fileUrl ?? "",
       "createdAt": FieldValue.serverTimestamp(),
-      "uploadedBy": adminEmail,
+      "uploadedBy": adminEmails,
     });
 
     ScaffoldMessenger.of(context).showSnackBar(

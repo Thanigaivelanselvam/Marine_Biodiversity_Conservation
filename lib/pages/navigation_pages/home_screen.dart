@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:marine_trust/pages/admin_page/manager_desk_page.dart';
+import 'package:marine_trust/pages/authentication_page/account_settings_page.dart';
 import 'package:marine_trust/pages/general_page/marine_quiz.dart';
 import 'package:marine_trust/pages/general_page/ocean_life_page.dart';
 import 'package:marine_trust/pages/general_page/ocean_threats_page.dart';
@@ -24,11 +25,16 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
 
+  List<String> adminEmails = [
+    "thanigaivelanselvam@gmail.com",
+    "playreviewers@test.com",
+  ];
+
   void _openManagerDesk(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
     // 🔐 Admin check
-    if (user != null && user.email == "thanigaivelanselvam@gmail.com") {
+    if (user != null && adminEmails.contains(user.email)) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const ManagerDeskPage()),

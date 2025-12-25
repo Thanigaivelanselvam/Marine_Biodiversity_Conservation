@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:marine_trust/pages/admin_page/manager_desk_page.dart';
 
-const String adminEmail = "thanigaivelanselvam@gmail.com";
+final List<String> adminEmails =
+const [
+  "thanigaivelanselvam@gmail.com",
+  "playreviewers@test.com",
+].map((e) => e.toLowerCase().trim()).toList();
+
 
 class AdminLoginPage extends StatefulWidget {
   const AdminLoginPage({super.key});
@@ -38,13 +43,16 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
 
       final user = userCredential.user;
 
-      if (user == null || user.email != adminEmail) {
+      final loggedInEmail = user?.email?.toLowerCase().trim();
+
+      if (loggedInEmail == null || !adminEmails.contains(loggedInEmail)) {
         await FirebaseAuth.instance.signOut();
         throw FirebaseAuthException(
           code: "unauthorized",
           message: "You are not authorized",
         );
       }
+
 
       if (!mounted) return;
 
