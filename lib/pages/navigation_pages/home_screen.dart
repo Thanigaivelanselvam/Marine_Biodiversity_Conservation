@@ -2,15 +2,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:marine_trust/pages/admin_page/manager_desk_page.dart';
-import 'package:marine_trust/pages/authentication_page/account_settings_page.dart';
 import 'package:marine_trust/pages/general_page/marine_quiz.dart';
 import 'package:marine_trust/pages/general_page/ocean_life_page.dart';
 import 'package:marine_trust/pages/general_page/ocean_threats_page.dart';
 import 'package:marine_trust/pages/general_page/volunteer_activity_page.dart';
 import 'package:marine_trust/pages/navigation_pages/career_page.dart';
 import 'package:marine_trust/pages/navigation_pages/donate_screen.dart';
-import 'package:marine_trust/pages/navigation_pages/events_page.dart';
-import 'package:marine_trust/pages/navigation_pages/notice_page.dart';
 import 'package:marine_trust/pages/others_page/explore_more_page.dart';
 import 'package:marine_trust/pages/others_page/notification_page.dart';
 import 'package:marine_trust/pages/policy-pages/membership_page.dart';
@@ -114,19 +111,6 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
             icon: Icon(Icons.notifications),
-          ),
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) {
-                    return AccountSettingsPage();
-                  },
-                ),
-              );
-            },
-            icon: Icon(Icons.person, color: Colors.white),
           ),
           IconButton(
             onPressed: () {
