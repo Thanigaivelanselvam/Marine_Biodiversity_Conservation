@@ -18,6 +18,7 @@ class ManagerDeskPage extends StatefulWidget {
 
 class _ManagerDeskPageState extends State<ManagerDeskPage> {
   bool isAuthorized = false;
+  bool checked = false;
 
   @override
   void initState() {
@@ -25,72 +26,80 @@ class _ManagerDeskPageState extends State<ManagerDeskPage> {
     _verifyAdmin();
   }
 
-  void _verifyAdmin() {
+  void _verifyAdmin() async {
     final user = FirebaseAuth.instance.currentUser;
-    final email = user?.email?.toLowerCase().trim();
 
-    final allowedAdmins =
-    adminEmails.map((e) => e.toLowerCase().trim()).toList();
+    final email = user?.email?.toLowerCase();
 
-    if (user != null && email != null && allowedAdmins.contains(email)) {
-      // ✅ ADMIN ALLOWED
-      setState(() => isAuthorized = true);
+    if (user != null && email != null && adminEmails.contains(email)) {
+      // ✅ ADMIN ACCESS
+      setState(() {
+        isAuthorized = true;
+        checked = true;
+      });
     } else {
-      // 🚫 NOT ADMIN → SHOW WARNING & REDIRECT
-      Future.microtask(() async {
-        await showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text("Access Restricted"),
-            content: const Text(
-              "Manager Desk is accessible only to the administrator.",
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("OK"),
-              ),
-            ],
+      // ❌ BLOCK NON-ADMIN
+      setState(() => checked = true);
+
+      await Future.delayed(Duration.zero);
+
+      if (!mounted) return;
+
+      await showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("Access Restricted"),
+          content: const Text(
+            "Manager Desk is accessible only to the administrator.",
           ),
-        );
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
 
-        await FirebaseAuth.instance.signOut();
-
-        if (!mounted) return;
-
+      if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const AdminLoginPage()),
               (route) => false,
         );
-      });
+      }
     }
   }
 
-  Future<void> _logout(BuildContext context) async {
+  Future<void> _logout() async {
     await FirebaseAuth.instance.signOut();
+
+    if (!mounted) return;
 
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => AdminLoginPage()),
-      (route) => false,
+      MaterialPageRoute(builder: (_) => const AdminLoginPage()),
+          (route) => false,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!checked) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     if (!isAuthorized) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(); // safety fallback
     }
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: Icon(Icons.arrow_back, color: Colors.white),
-        ),
+        leading: IconButton(onPressed: (){
+          Navigator.pop(context);
+        }, icon: Icon(Icons.arrow_back,color: Colors.white,)),
         title: const Text(
           "Manager Desk",
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
@@ -99,8 +108,8 @@ class _ManagerDeskPageState extends State<ManagerDeskPage> {
         actions: [
           IconButton(
             tooltip: "Logout",
-            icon: const Icon(Icons.logout,color: Colors.white,),
-            onPressed: () => _logout(context),
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: _logout,
           ),
         ],
       ),

@@ -34,11 +34,14 @@ class _NoticeUploadPageState extends State<NoticeUploadPage> {
   void _checkAdminAccess() {
     final user = FirebaseAuth.instance.currentUser;
 
-    if (user != null && user.email == adminEmails) {
+    if (user != null && adminEmails.contains(user.email)) {
       setState(() => isAuthorized = true);
     } else {
       Future.microtask(() {
         Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Access denied")),
+        );
       });
     }
   }
@@ -89,7 +92,8 @@ class _NoticeUploadPageState extends State<NoticeUploadPage> {
       "message": _messageCtrl.text.trim(),
       "fileUrl": fileUrl ?? "",
       "createdAt": FieldValue.serverTimestamp(),
-      "uploadedBy": adminEmails,
+      "uploadedBy": FirebaseAuth.instance.currentUser?.email,
+
     });
 
     ScaffoldMessenger.of(context).showSnackBar(

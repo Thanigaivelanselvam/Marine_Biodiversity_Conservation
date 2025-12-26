@@ -41,10 +41,18 @@ class _EventUploadPageState extends State<EventUploadPage> {
   void _checkAdmin() {
     final user = FirebaseAuth.instance.currentUser;
 
-    if (user != null && user.email == adminEmails) {
+    if (user != null && adminEmails.contains(user.email)) {
       setState(() => isAuthorized = true);
     } else {
-      Future.microtask(() => Navigator.pop(context));
+      Future.microtask(() {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Access denied: Admin only"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        Navigator.pop(context);
+      });
     }
   }
 
@@ -125,7 +133,8 @@ class _EventUploadPageState extends State<EventUploadPage> {
       "imageUrl": imageUrl ?? "",
       "fileUrl": fileUrl ?? "",
       "createdAt": FieldValue.serverTimestamp(),
-      "uploadedBy": adminEmails,
+      "uploadedBy": FirebaseAuth.instance.currentUser?.email,
+
     });
 
     ScaffoldMessenger.of(context).showSnackBar(

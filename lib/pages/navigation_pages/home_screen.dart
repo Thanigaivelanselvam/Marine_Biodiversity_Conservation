@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:marine_trust/pages/admin_page/manager_desk_page.dart';
+import 'package:marine_trust/pages/authentication_page/account_settings_page.dart';
 import 'package:marine_trust/pages/general_page/marine_quiz.dart';
 import 'package:marine_trust/pages/general_page/ocean_life_page.dart';
 import 'package:marine_trust/pages/general_page/ocean_threats_page.dart';
@@ -31,15 +32,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openManagerDesk(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+    final email = user?.email?.toLowerCase();
 
-    // 🔐 Admin check
-    if (user != null && adminEmails.contains(user.email)) {
+    if (user != null && email != null && adminEmails.contains(email)) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const ManagerDeskPage()),
       );
     } else {
-      // 🚫 Warning popup for non-admin
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
