@@ -500,49 +500,97 @@ class _ExploreMorePageState extends State<ExploreMorePage>
         height: 250,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          image: DecorationImage(
-            image: NetworkImage(data["image"]!),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-              Colors.black.withOpacity(0.4),
-              BlendMode.darken,
-            ),
-          ),
+          color: Colors.black12,
         ),
 
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          alignment: Alignment.bottomCenter,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
 
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-
+          child: Stack(
+            fit: StackFit.expand,
             children: [
-              CircleAvatar(
-                backgroundImage: NetworkImage(data["flag"]!),
-                radius: 28,
-              ),
-              const SizedBox(height: 10),
 
-              Text(
-                data["name"]!,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+              // 🌄 IMAGE WITH LOADER
+              Image.network(
+                data["image"]!,
+                fit: BoxFit.cover,
+
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+
+                  return Container(
+                    color: Colors.black26,
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 3,
+                      ),
+                    ),
+                  );
+                },
+
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.black38,
+                    child: const Center(
+                      child: Icon(
+                        Icons.broken_image,
+                        color: Colors.white,
+                        size: 50,
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+              // 🌫 DARK OVERLAY
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.black.withOpacity(0.2),
+                      Colors.black.withOpacity(0.6),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
                 ),
               ),
 
-              const SizedBox(height: 6),
+              // 📍 TEXT CONTENT
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    CircleAvatar(
+                      backgroundImage: NetworkImage(data["flag"]!),
+                      radius: 28,
+                    ),
+                    const SizedBox(height: 10),
 
-              Text(
-                data["desc"]!,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 17,
-                  height: 1.5,
+                    Text(
+                      data["name"]!,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    Text(
+                      data["desc"]!,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 17,
+                        height: 1.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
-                textAlign: TextAlign.center,
               ),
             ],
           ),
