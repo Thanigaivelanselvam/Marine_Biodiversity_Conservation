@@ -166,7 +166,7 @@ class MembershipAgreementPage extends StatelessWidget {
 
             buildTitle("11. Contact Information", titleSize),
             buildPara(
-              "For membership-related queries, contact:\nEmail: worldmarinebiodiversity@gmail.com\nPhone: +00 91 99944 01291\nAddress: No.12 First Main Street, Sivaaji Nagar, Chengalpattu, Tamil Nadu - 603001",
+              "For membership-related queries, contact:\nEmail: worldmarinebiodiversity@gmail.com\nPhone: +91 9994401291\nAddress: No.12 First Main Street, Sivaaji Nagar, Chengalpattu, Tamil Nadu - 603001",
               textSize,
             ),
           ],

@@ -141,7 +141,7 @@ class TermsAndConditionsPage extends StatelessWidget {
             Text(
               "For questions about these Terms:\n"
                   "📧 Email: worldmarinebiodiversity@gmail.com\n"
-                  "📞 Phone:  +00 91 99944 01291",
+                  "📞 Phone:  +91 9994401291",
               style: TextStyle(fontSize: textSize, height: 1.5),
             ),
 
